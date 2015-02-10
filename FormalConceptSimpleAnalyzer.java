@@ -1,5 +1,7 @@
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * 形式概念解析を実装したクラス. 
@@ -18,66 +20,135 @@ public class FormalConceptSimpleAnalyzer{
     
     
     
-    
     /////////////
     // Methods //
     /////////////
     
     /**
-     * コンテクスト表からオブジェクト集合の極集合を取得するメソッド.<br>
-     * オブジェクト番号とは, オブジェクトの集合を2進数表現したものである.<br>
-     * 属性番号も同様.<br>
-     * java の特性上, この方法ではオブジェクト数も属性数も31を超えてはいけない.
-     *
+     * オブジェクト極集合に対応した属性部分集合番号を返すメソッド.
+     * 
+     * @param objectSet    オブジェクトの部分集合に対応したオブジェクト部分集合番号
      * @param contextTable コンテクスト表. [オブジェクト]x[属性]
-     * @return             各オブジェクト番号に対応した属性番号
+     * @return             オブジェクト極集合に対応した属性部分集合番号
      */
-    public static int[] getObjectPolarSet(boolean[][] contextTable){
+    public static int getObjectPolarSet(int objectSet, boolean[][] contextTable){
 	
-	int objectLength = contextTable.length;
-	int attributeLength = contextTable[0].length;
-	
-	// オブジェクト集合の全ての組み合わせの数だけ配列を作る.
-	int[] objectPolarSet = new int[1 << objectLength];
-	Arrays.fill(objectPolarSet,0);
-	
-	// 全ての組み合わせを全探索.
-	boolean[] bools; // オブジェクト番号から取得されたブール配列.
-	int numOfPovObject; // 注目するオブジェクトの数.
-	int count; // 適当なカウンタ.
-	boolean[][] povObject; // 注目すべきオブジェクト.
-	boolean[] intersection; //属性の共通部分.
-	for(int i=0;i<objectPolarSet.length;i++){
-	    // オブジェクト番号からブール配列を取得.
-	    // true の付いたオブジェクトの共通部分を見るのである.
-	    bools = getBoolsFromBits(i,objectLength);
-	    numOfPovObject = getNumOfTrue(bools);
-	    povObject = new boolean[numOfPovObject][attributeLength];
-	    count = 0;
-	    // 注目すべきブール配列群を作成. 注目オブジェクトが0個の時は,
-	    // 共通部分は全て真で定義する.
-	    if(numOfPovObject==0){
-		intersection = new boolean[attributeLength];
-		Arrays.fill(intersection,true);
-	    }else{
-		for(int j=0;j<objectLength;j++){
-		    if(bools[j]){
-			povObject[count] = contextTable[j];
-			count++;
-			if(count>=numOfPovObject){
-			    break;
-			}
-		    }
-		}
-		// 共通部分を取得.
-		intersection = intersectAttributes(povObject);
-	    }
-	    
-	    // 共通部分から属性番号を取得し, 格納.
-	    objectPolarSet[i] = getBitFromBools(intersection);
+	// まずは, オブジェクト部分集合の要素数を取り出す.
+	int elementSize = Integer.bitCount(objectSet);
+
+	// もし要素数が0ならば, 全ての要素を持つ属性集合番号を返す.
+	if(elementSize == 0){
+	    return (1 << (contextTable[0].length+1)) - 1;
 	}
 	
-	return objectPolarSet;
+	// オブジェクト部分集合に含まれる要素全てのコンテクスト表を取り出す.
+	boolean[][] contextSubTable = new boolean[elementSize][contextTable[0].length];
+	int objectCounter=0;
+	for(int i=0;i<contextTable.length;i++){
+	    if(((objectSet>>>i) & 1) == 1){
+		for(int j=0;j<contextTable[0].length;j++){
+		    contextSubTable[objectCounter][j] = contextTable[i][j];
+		}
+		objectCounter++;
+	    }
+	}
+
+	// 上記のコンテクスト表の共通部分を取得.
+	boolean[] intersection = intersectAttributes(contextSubTable);
+	
+	// 共通部分から属性部分集合の番号を取得して返す.
+	return getBitFromBools(intersection);
+	
+    }
+    
+    
+    /**
+     * 属性極集合に対応したオブジェクト部分集合番号を返すメソッド.
+     * 
+     * @param attributeSet 属性の部分集合に対応した属性部分集合番号
+     * @param contextTable コンテクスト表. [オブジェクト]x[属性]
+     * @return             属性極集合に対応したオブジェクト部分集合番号
+     */
+    public static int getAttributePolarSet(int attributeSet, boolean[][] contextTable){
+	
+	// まずは, 属性集合の要素数を取り出す.
+	int elementSize = Integer.bitCount(attributeSet);
+
+	// もし要素数が0ならば, 全ての要素を持つオブジェクト集合番号を返す.
+	if(elementSize == 0){
+	    return (1 << (contextTable.length+1)) - 1;
+	}
+	
+	// 属性部分集合に含まれる要素全てのコンテクスト表を取り出す.
+	boolean[][] contextSubTable = new boolean[elementSize][contextTable.length];
+	int attributeCounter = 0;
+	for(int i=0;i<contextTable[0].length;i++){
+	    if(((attributeSet>>>i) & 1) == 1){
+		for(int j=0;j<contextTable.length;j++){
+		    contextSubTable[attributeCounter][j] = contextTable[j][i];
+		}
+		attributeCounter++;
+	    }
+	}
+
+	// 上記のコンテクスト表の共通部分を取得.
+	boolean[] intersection = intersectAttributes(contextSubTable);
+
+	// 共通部分からオブジェクト部分集合の番号を取得して返す.
+	return getBitFromBools(intersection);
+    }
+    
+    
+    /**
+     * int の2進数表記からブール配列を返すメソッド.
+     *
+     * @param bits   int の2進数表記. 非負整数であることを仮定する.
+     * @param length 配列の長さ
+     * @return       ブール配列
+     */
+    public static boolean[] getBoolsFromBits(int bits, int length){
+	boolean[] bools = new boolean[length];
+	
+	for(int i=0;i<bools.length;i++){
+	    // シフトしてマスクしたやつが1じゃなかったら真(?)
+	    if(((bits >>> i) & 1) == 1){
+		bools[i] = true;
+	    }else{
+		bools[i] = false;
+	    }
+	}
+	
+	return bools;
+    }
+
+
+    /**
+     * コンテクスト表から形式概念解析を行なうメソッド.
+     *
+     * @param contextTable コンテクスト表. [オブジェクト]x[属性]
+     * @return             オブジェクト部分集合番号から属性部分集合番号へのマップのリスト
+     */
+    public static HashMap<Integer,Integer> analize(boolean[][] contextTable){
+
+	// 結果を格納するマップリスト. 初期容量0.
+	HashMap<Integer,Integer> formalConcepts = new HashMap<>(0);
+	
+	// オブジェクトにおける全ての組み合わせを計算する.
+	int objectCombinationLength = (1 << contextTable.length);
+	
+	// オブジェクトの全ての組み合わせに対して, 双極集合を計算する.
+	// 双極集合を表す番号が元のオブジェクト部分集合を表す番号と一致している場合,
+	// 結果に格納する.
+	int objectPolarSet,dualPolarSet;
+	for(int i=0;i<objectCombinationLength;i++){
+	    objectPolarSet = getObjectPolarSet(i,contextTable);
+	    dualPolarSet = getAttributePolarSet(objectPolarSet,contextTable);
+	    if(i == dualPolarSet){
+		formalConcepts.put(i,objectPolarSet);
+	    }
+	}
+
+	return formalConcepts;
     }
     
     
@@ -110,28 +181,6 @@ public class FormalConceptSimpleAnalyzer{
 	}
 
 	return intersection;
-    }
-    
-    
-    /**
-     * int の2進数表記からブール配列を返すメソッド.
-     * @param bits   int の2進数表記. 非負整数であることを仮定する.
-     * @param length 配列の長さ
-     * @return       ブール配列
-     */
-    private static boolean[] getBoolsFromBits(int bits, int length){
-	boolean[] bools = new boolean[length];
-	
-	for(int i=0;i<bools.length;i++){
-	    // シフトしてマスクしたやつが1じゃなかったら真(?)
-	    if(((bits >>> i) & 1) == 1){
-		bools[i] = true;
-	    }else{
-		bools[i] = false;
-	    }
-	}
-	
-	return bools;
     }
     
     
@@ -185,19 +234,20 @@ public class FormalConceptSimpleAnalyzer{
 	     {true,false,true,false},
 	     {true,false,false,false}};
 	
-	int[] objectPolarSet = getObjectPolarSet(contextTable);
-	
-	for(int i=0;i<objectPolarSet.length;i++){
-	    for(int j=0;j<5;j++){
-		int num = (i >>> j) & 1;
+	HashMap<Integer,Integer> formalConcepts = analize(contextTable);
+
+	for(Map.Entry<Integer,Integer> map : formalConcepts.entrySet()){
+	    for(int i=0;i<5;i++){
+		int num = (map.getKey() >>> i) & 1;
 		System.out.print(num);
 	    }
 	    System.out.print(":");
-	    for(int j=0;j<4;j++){
-		int num = (objectPolarSet[i] >>> j) & 1;
+	    for(int i=0;i<4;i++){
+		int num = (map.getValue() >>> i) & 1;
 		System.out.print(num);
 	    }
 	    System.out.println();
+	    
 	}
     }
 }
