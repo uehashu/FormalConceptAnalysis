@@ -123,6 +123,22 @@ public class FormalConceptSparseAnalyzer{
     }
     
     
+    /**
+     * 属性に対し極作用素を適用させるメソッド.
+     * @param attributeSubset 極作用素の対象となる属性部分集合
+     * @return                極作用結果. オブジェクト部分集合.
+     */
+    private HashSet<Integer> getAttributePolarSet(HashSet<Integer> attributeSubset){
+	HashSet<Integer> polar = new HashSet<>();
+	for(Tupple tupple : data){
+	    if(tupple.getAttributeSubset().containsAll(attributeSubset)){
+		polar.addAll(tupple.deepCopy().getObjectSubset());
+	    }
+	}
+	return polar;
+    }
+    
+    
     
     //////////
     // Test //
