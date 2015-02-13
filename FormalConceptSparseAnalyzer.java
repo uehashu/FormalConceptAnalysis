@@ -49,9 +49,16 @@ public class FormalConceptSparseAnalyzer{
 	    // 一時的に結果を格納するヤツ.
 	    HashSet<Tupple> tempTupples = new HashSet<>();
 	    
+	    // まずは, 注目タプルが形式概念であるかどうかを判定する.
+	    // 具体的には, オブジェクト部分集合とその双極集合を比較し,
+	    // 同一であれば形式概念と判定される.
+	    if(povTupple.getObjectSubset().equals
+	       (getAttributePolarSet(getObjectPolarSet(povTupple.getObjectSubset())))){
+		tempTupples.add(new Tupple(povTupple.deepCopy().getObjectSubset(),
+					   getObjectPolarSet(povTupple.getObjectSubset())));
+	    }
+	    
 	    // まずは注目タプルの極作用素を行う.
-	    tempTupples.add(new Tupple(povTupple.deepCopy().getObjectSubset(),
-				       getObjectPolarSet(povTupple.getObjectSubset())));
 	    
 	    // 次に, 今までの結果との共通部分なオブジェクト部分集合に対する極作用素も行う.
 	    // 共通部分が空な場合は何もしない.
