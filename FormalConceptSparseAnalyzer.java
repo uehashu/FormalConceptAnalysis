@@ -16,6 +16,8 @@ import java.util.ArrayList;
 public class FormalConceptSparseAnalyzer{
     
     TreeSet<Tupple> data; // 対象データ
+    HashSet<Integer> universeOfObject; // オブジェクトの全集合
+    HashSet<Integer> universeOfAttribute; // 属性の全集合
     
     
     //////////////////
@@ -23,10 +25,16 @@ public class FormalConceptSparseAnalyzer{
     //////////////////
     
     /**
-     * @param 対象データ
+     * @param data                対象データ
+     * @param universeOfObject    オブジェクトの全集合
+     * @param universeOfAttribute 属性の全集合
      */
-    public FormalConceptSparseAnalyzer(TreeSet<Tupple> data){
+    public FormalConceptSparseAnalyzer(TreeSet<Tupple> data,
+				       HashSet<Integer> universeOfObject,
+				       HashSet<Integer> universeOfAttribute){
 	this.data = data;
+	this.universeOfObject = universeOfObject;
+	this.universeOfAttribute = universeOfAttribute;
     }
     
     
@@ -74,6 +82,14 @@ public class FormalConceptSparseAnalyzer{
 	    tupples.addAll(tempTupples);
 	}
 	
+	// オブジェクトが空集合なタプルと属性集合が空集合なタプルを追加する.
+	Tupple top = new Tupple();
+	top.addElementsToObject(universeOfObject);
+	Tupple bottom = new Tupple();
+	bottom.addElementsToAttribute(universeOfAttribute);
+	tupples.add(top);
+	tupples.add(bottom);
+	
 	// オブジェクト部分集合の要素数でソートしてから返す.
 	return new TreeSet<Tupple>(tupples);
     }
@@ -81,24 +97,33 @@ public class FormalConceptSparseAnalyzer{
     
     /**
      * 形式概念解析を行うメソッド.
-     * @param data 対象データ
-     * @return     解析結果
+     * @param data                対象データ
+     * @param universeOfObject    オブジェクトの全集合
+     * @param universeOfAttribute 属性の全集合
+     * @return                    解析結果
      */
-    public static TreeSet<Tupple> analize(TreeSet<Tupple> data){
+    public static TreeSet<Tupple> analize(TreeSet<Tupple> data,
+					  HashSet<Integer> universeOfObject,
+					  HashSet<Integer> universeOfAttribute){
 	FormalConceptSparseAnalyzer fcsa = 
-	    new FormalConceptSparseAnalyzer(data);
+	    new FormalConceptSparseAnalyzer(data,universeOfObject,universeOfAttribute);
 	return fcsa.analize();
     }
     
     
     /**
      * 形式概念解析を行うメソッド.
-     * @param data 対象データ
-     * @return     解析結果
+     * @param data                対象データ
+     * @param universeOfObject    オブジェクトの全集合
+     * @param universeOfAttribute 属性の全集合
+     * @return                    解析結果
      */
-    public static ArrayList<Tupple> analize(ArrayList<Tupple> data){
+    public static ArrayList<Tupple> analize(ArrayList<Tupple> data,
+					    HashSet<Integer> universeOfObject,
+					    HashSet<Integer> universeOfAttribute){
 	return new ArrayList<Tupple>(FormalConceptSparseAnalyzer.analize
-				     (new TreeSet<Tupple>(data)));
+				     (new TreeSet<Tupple>(data),
+				      universeOfObject,universeOfAttribute));
     }
     
     
@@ -155,6 +180,18 @@ public class FormalConceptSparseAnalyzer{
 	
 	boolean t = true;
 	boolean f = false;
+	HashSet<Integer> universeOfObject = new HashSet<>(); // オブジェクトの全集合
+	HashSet<Integer> universeOfAttribute = new HashSet<>(); // 属性の全集合
+
+	// オブジェクトの全集合を準備.
+	for(int i=1;i<=5;i++){
+	    universeOfObject.add(i);
+	}
+
+	// 属性の全集合を準備.
+	for(int i=1;i<=4;i++){
+	    universeOfAttribute.add(i);
+	}
 	
 	boolean[][] contextTable = 
 	    {{f,t,t,t},
@@ -162,6 +199,7 @@ public class FormalConceptSparseAnalyzer{
 	     {t,f,t,f},
 	     {t,f,t,f},
 	     {t,f,f,f}};
+	
 	
 	/*
 	boolean[][] contextTable = 
@@ -174,7 +212,7 @@ public class FormalConceptSparseAnalyzer{
 	
 	// 対象を格納するリスト.
 	ArrayList<Tupple> testData = new ArrayList<>();
-	
+
 	// リストに対象を格納していく.
 	for(int i=0;i<contextTable[0].length;i++){
 	    Tupple tupple = new Tupple(i+1);
@@ -187,25 +225,37 @@ public class FormalConceptSparseAnalyzer{
 	}
 	
 	// 解析.
-	ArrayList<Tupple> concepts = FormalConceptSparseAnalyzer.analize(testData);
+	ArrayList<Tupple> concepts =
+	    FormalConceptSparseAnalyzer.analize(testData,
+						universeOfObject,
+						universeOfAttribute);
 	
 	// 結果の表示.
 	System.out.println("{attributes}  :  {objects}");
 	for(Tupple tupple : concepts){
 	    String attributes = new String();
 	    String objects = new String();
-	    for(Integer attribute : tupple.getAttributeSubset()){
-		attributes += attribute.intValue();
-		attributes += ",";
+
+	    if(tupple.getAttributeSubset().size() > 0){
+		for(Integer attribute : tupple.getAttributeSubset()){
+		    attributes += attribute.intValue();
+		    attributes += ",";
+		}
+		attributes = attributes.substring(0,attributes.length()-1);
+	    }else{
+		attributes = "Empty";
 	    }
-	    attributes = attributes.substring(0,attributes.length()-1);
-	    
-	    for(Integer obj : tupple.getObjectSubset()){
-		objects += obj.intValue();
-		objects += ",";
+
+	    if(tupple.getObjectSubset().size() > 0){
+		for(Integer obj : tupple.getObjectSubset()){
+		    objects += obj.intValue();
+		    objects += ",";
+		}
+		objects = objects.substring(0,objects.length()-1);
+	    }else{
+		objects = "Empty";
 	    }
-	    objects = objects.substring(0,objects.length()-1);
-	    
+		
 	    System.out.println("{" + attributes + "}  :  {" + objects + "}");
 	    
 	}

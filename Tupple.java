@@ -128,6 +128,34 @@ public class Tupple implements Comparable<Tupple>{
     public void addElementToObject(Integer obj){
 	objectSubset.add(obj);
     }
+
+    
+    /**
+     * オブジェクト部分集合にオブジェクト部分集合を追加するメソッド.
+     * @param objectSubset 追加するオブジェクト部分集合
+     */
+    public void addElementsToObject(HashSet<Integer> objectSubset){
+	this.objectSubset.addAll(objectSubset);
+    }
+
+
+    /**
+     * 属性部分集合に属性を追加するメソッド.
+     * @param attr 追加する属性
+     */
+    public void addElementToAttribute(Integer attr){
+	attributeSubset.add(attr);
+    }
+    
+    
+    /**
+     * 属性部分集合に属性部分集合を追加するメソッド.
+     * @param attributeSubset 追加する属性部分集合
+     */
+    public void addElementsToAttribute(HashSet<Integer> attributeSubset){
+	this.attributeSubset.addAll(attributeSubset);
+    }
+
     
     /**
      * オブジェクト部分集合を返すメソッド.
