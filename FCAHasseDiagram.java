@@ -1,9 +1,12 @@
 import java.util.HashSet;
 import java.util.TreeSet;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.SortedSet;
 import java.util.NavigableSet;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * 形式概念解析で得られたタプルに対するハッセ図を作るクラス.
@@ -14,7 +17,7 @@ import java.util.NavigableSet;
  */
 public class FCAHasseDiagram{
     
-    TreeSet<Node> nodes = new TreeSet<>(); // ノードの集合.
+    HashSet<Node> nodes = new HashSet<>(); // ノードの集合.
     HashMap<Node,HashSet<Node>> arrows = new HashMap<>(); // 有向エッジ. <to,froms>
     
     //////////////////
@@ -22,9 +25,7 @@ public class FCAHasseDiagram{
     //////////////////
 
     /**
-     * コンストラクタを呼んだ段階で, すでに各ノードはオブジェクト部分集合の要素数により
-     * 降順でソートされている. (Setのくせに...)
-     * また, 有向エッジのコレクションも初期化しておく.
+     * 有向エッジのコレクションも初期化しておく.
      * ついでにハッセ図の構造も算出しとく.
      * @param tupples 形式概念解析で得られたタプル
      */
@@ -50,23 +51,57 @@ public class FCAHasseDiagram{
      */
     private void calcHasseDiagram(){
 	
+	// ノードの集合を,  オブジェクト部分集合の要素数の降順でソートするためのコンパレータ.
+	Comparator<Node> comp = new Comparator<Node>(){
+		// @override
+		public int compare(Node n1, Node n2){
+		    if(n1.getTupple().getObjectSubsetCardinality() >
+		       n2.getTupple().getObjectSubsetCardinality()){
+			return -1;
+		    }else if(n1.getTupple().getObjectSubsetCardinality() <
+			     n2.getTupple().getObjectSubsetCardinality()){
+			return 1;
+		    }else{
+			return 0;
+		    }
+		}
+	    };
+	
+	// ノードの集合を, オブジェクト部分集合の要素数の降順でソートする.
+	ArrayList<Node> sortedNodes = new ArrayList<>(nodes);
+	Collections.sort(sortedNodes,comp);
+	
 	// 上の階層(オブジェクト部分集合の要素数が多い順)から見ていく.
-	for(Node povNode : nodes){
-	    // 注目ノードより上位のノードを、昇順で取り出す.
-	    TreeSet<Node> headSet = new TreeSet<>(nodes.headSet(povNode));
-	    for(Node supNode : headSet.descendingSet()){
-		// 注目ノードが取り出したノードの部分集合であるならば以下.
-		if(supNode.getTupple().getObjectSubset().containsAll
+	for(Node povNode : sortedNodes){
+	    // 注目ノードよりオブジェクト要素数が多いノードを,
+	    // オブジェクト部分集合の要素数の昇順で取り出す.
+	    // この取り出したノードが注目ノードの親集合の候補になる.
+	    LinkedList<Node> candidateSupsetNodes = new LinkedList<>();
+	    for(Node candidateNode : sortedNodes){
+		if(candidateNode.getTupple().getObjectSubsetCardinality() >
+		   povNode.getTupple().getObjectSubsetCardinality()){
+		    candidateSupsetNodes.addFirst(candidateNode);
+		}else{
+		    // 降順に並んでいるので, 取り出したノードのオブジェクト部分集合の数が
+		    // 注目ノードのオブジェクト部分集合の数以下になったとき, ループを抜ける. 
+		    break;
+		}
+	    }
+
+	    // 候補ノードでループ.
+	    for(Node candidateNode : candidateSupsetNodes){
+		// 注目ノードが候補ノードの部分集合であるならば以下.
+		if(candidateNode.getTupple().getObjectSubset().containsAll
 		   (povNode.getTupple().getObjectSubset())){
 		    // 注目ノードの親集合コレクションが空である, もしくは
 		    // 取り出したノードが注目ノードの親集合に入っていないならば, 
 		    // 有向エッジを引き, 取り出したノードおよびその親集合を
 		    // 注目ノードの親集合に加える.
 		    if(povNode.getSuperclasses().isEmpty() ||
-		       !povNode.getSuperclasses().contains(supNode)){
-			arrows.get(povNode).add(supNode);
-			povNode.getSuperclasses().add(supNode);
-			povNode.getSuperclasses().addAll(supNode.getSuperclasses());
+		       !povNode.getSuperclasses().contains(candidateNode)){
+			arrows.get(povNode).add(candidateNode);
+			povNode.getSuperclasses().add(candidateNode);
+			povNode.getSuperclasses().addAll(candidateNode.getSuperclasses());
 		    }
 		}
 	    }
@@ -78,10 +113,10 @@ public class FCAHasseDiagram{
      * ノードの集合を返すメソッド.
      * @return ノードの集合
      */
-    public TreeSet<Node> getNodes(){
+    public HashSet<Node> getNodes(){
 	return nodes;
     }
-
+    
     
     /**
      * 有向エッジの集合を返すメソッド.
@@ -226,7 +261,7 @@ public class FCAHasseDiagram{
 	FCAHasseDiagram fcahd = new FCAHasseDiagram(concepts);
 	
 	// ノードの集合と有向エッジの集合を取得.
-	TreeSet<Node> nodes = fcahd.getNodes();
+	HashSet<Node> nodes = fcahd.getNodes();
 	HashMap<Node,HashSet<Node>> arrows = fcahd.getArrows();
 	
 	for(Node to : arrows.keySet()){
