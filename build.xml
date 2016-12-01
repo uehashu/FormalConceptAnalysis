@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="sample"
+	 basedir="."
+	 default="compile">
+
+  <path id="jung2">
+    <fileset dir="jung2">
+      <include name="**/*.jar"/>
+    </fileset>
+  </path>
+  
+  
+  <target name="compile">
+    <javac srcdir="."
+	   destdir="."
+	   classpathref="jung2"/>
+  </target>
+
+  <target name="run">
+    <java classname="FCAHasseVisualizerSample"
+	  classpath="."
+	  classpathref="jung2"
+	  fork="true"/>
+  </target>
+  
+  <target name="clean">
+    <delete>
+      <fileset dir=".">
+	<include name="*.class"/>
+      </fileset>
+    </delete>
+  </target>
+</project>
