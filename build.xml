@@ -30,4 +30,6 @@
       </fileset>
     </delete>
   </target>
+
+  <target name="test" depends="clean,compile,run"/>
 </project>
