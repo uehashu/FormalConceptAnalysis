@@ -1,0 +1,15 @@
+language: java
+
+before_install:
+  - ant clean
+install:
+  - ant compile
+script:
+  - ant run &
+  - FCA_PID=$!
+after_script:
+  - kill $FCA_PID
+  
+jdk:
+  - oraclejdk8
+  - oraclejdk7
