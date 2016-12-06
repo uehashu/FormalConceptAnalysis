@@ -1,7 +1,7 @@
 Formal Concept Analysis(FCA)
 ============================
 
-<a href="https//travis-ci.org/uehashu/FormalConceptAnalysis">
+<a href="https://travis-ci.org/uehashu/FormalConceptAnalysis">
 	<img src="https://travis-ci.org/uehashu/FormalConceptAnalysis.svg?branch=master" alt="Build Status">
 </a>
 
