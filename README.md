@@ -35,3 +35,10 @@ What?
 
 ### HasseVisualizerSample.java ###
 ハッセ図を描画するサンプルコード.
+
+
+
+## License ##
+Copyright (c) 2013 uehashu(uehashu@gmail.com)
+Released under the MIT license
+http://opensource.org/licenses/mit-license.php
