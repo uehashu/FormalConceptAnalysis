@@ -109,9 +109,6 @@ public class FormalConceptSparseAnalyzer{
                (getAttributePolarSet(getObjectPolarSet(povTupple.getObjectSubset())))){
                 tempTupples.add(new Tupple(povTupple.deepCopy().getObjectSubset(),
                                            getObjectPolarSet(povTupple.getObjectSubset())));
-                System.out.println(": FormalConcept.");
-            }else{
-                System.out.println(": NonFromalConcept.");
             }
 
             // 次に, 今までの結果との共通部分なオブジェクト部分集合に対する極作用素も行う.
@@ -246,6 +243,18 @@ public class FormalConceptSparseAnalyzer{
         {f,t,t,t},
         {f,t,t,t},
         {t,f,f,t}};
+        /*
+        boolean[][] contextTable = new boolean[50][30];
+        for(int i=0;i<contextTable.length;i++){
+            for(int j=0;j<contextTable[0].length;j++){
+                if(Math.random() > 0.5){
+                    contextTable[i][j] = true;
+                }else{
+                    contextTable[i][j] = false;
+                }
+            }
+        }
+        */
 
         // オブジェクトの全集合を準備.
         for(int i=1;i<=contextTable.length;i++){
@@ -256,15 +265,6 @@ public class FormalConceptSparseAnalyzer{
         for(int i=1;i<=contextTable[0].length;i++){
             universeOfAttribute.add(i);
         }
-
-        /*
-          boolean[][] contextTable =
-          {{f,t,t,t,t,f},
-          {t,f,t,t,t,t},
-          {t,f,t,f,t,t},
-          {t,f,t,f,f,t},
-          {t,f,f,f,f,f}};
-        */
 
         // 対象を格納するリスト.
         ArrayList<Tupple> testData = new ArrayList<>();
