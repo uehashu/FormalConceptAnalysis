@@ -52,7 +52,43 @@ public class FormalConceptSparseAnalyzer{
         // 結果を格納するヤツ.
         HashSet<Tupple> tupples =  new HashSet<>();
 
+        // まず, 与えられたデータに重複，即ち同じ属性部分集合を持つオブジェクトが
+        // 存在しないかを確認する.
+        // 重複するオブジェクトは統合する.
+        HashSet<Tupple> attributeDeduplicatedTupples = new HashSet<>();
         for(Tupple povTupple : data){
+            boolean dup = false;
+            for(Tupple compTupple : attributeDeduplicatedTupples){
+                if(povTupple.getAttributeSubset().equals(compTupple.getAttributeSubset())){
+                    compTupple.addElementsToObject(povTupple.getObjectSubset());
+                    dup = true;
+                    break;
+                }
+            }
+            if(!dup){
+                attributeDeduplicatedTupples.add(povTupple.deepCopy());
+            }
+        }
+
+        // 同様に, オブジェクトの重複を統合していく.
+        HashSet<Tupple> deduplicatedTupples = new HashSet<>();
+        for(Tupple povTupple : attributeDeduplicatedTupples){
+            boolean dup = false;
+            for(Tupple compTupple : deduplicatedTupples){
+                if(povTupple.getObjectSubset().equals(compTupple.getObjectSubset())){
+                    compTupple.addElementsToAttribute(povTupple.getAttributeSubset());
+                    dup = true;
+                    break;
+                }
+            }
+            if(!dup){
+                deduplicatedTupples.add(povTupple.deepCopy());
+            }
+        }
+        attributeDeduplicatedTupples = null; // メモリ開放.
+        
+
+        for(Tupple povTupple : deduplicatedTupples){
 
             // 一時的に結果を格納するヤツ.
             HashSet<Tupple> tempTupples = new HashSet<>();
@@ -65,8 +101,6 @@ public class FormalConceptSparseAnalyzer{
                 tempTupples.add(new Tupple(povTupple.deepCopy().getObjectSubset(),
                                            getObjectPolarSet(povTupple.getObjectSubset())));
             }
-
-            // まずは注目タプルの極作用素を行う.
 
             // 次に, 今までの結果との共通部分なオブジェクト部分集合に対する極作用素も行う.
             // 共通部分が空な場合は何もしない.
@@ -183,23 +217,21 @@ public class FormalConceptSparseAnalyzer{
         HashSet<Integer> universeOfObject = new HashSet<>(); // オブジェクトの全集合
         HashSet<Integer> universeOfAttribute = new HashSet<>(); // 属性の全集合
 
+        boolean[][] contextTable =
+        {{t,t,t,f},
+        {f,t,t,t},
+        {f,t,t,t},
+        {t,f,f,t}};
+
         // オブジェクトの全集合を準備.
-        for(int i=1;i<=5;i++){
+        for(int i=1;i<=contextTable.length;i++){
             universeOfObject.add(i);
         }
 
         // 属性の全集合を準備.
-        for(int i=1;i<=4;i++){
+        for(int i=1;i<=contextTable[0].length;i++){
             universeOfAttribute.add(i);
         }
-
-        boolean[][] contextTable =
-            {{f,t,t,t},
-             {t,f,t,t},
-             {t,f,t,f},
-             {t,f,t,f},
-             {t,f,f,f}};
-
 
         /*
           boolean[][] contextTable =
