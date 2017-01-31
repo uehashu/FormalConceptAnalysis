@@ -52,8 +52,18 @@ public class FormalConceptSparseAnalyzer{
         // 結果を格納するヤツ.
         HashSet<Tupple> tupples =  new HashSet<>();
 
-        // まず, 与えられたデータに重複，即ち同じ属性部分集合を持つオブジェクトが
-        // 存在しないかを確認する.
+        /*
+        for(Tupple povTupple : data){
+            System.out.print("{");
+            System.out.print(povTupple.getObjectSubset().toString());
+            System.out.print("},{");
+            System.out.print(povTupple.getAttributeSubset().toString());
+            System.out.println("}");
+        }
+        */
+
+        // まず, 与えられたデータの属性部分集合に重複が存在しないか，
+        //即ち同じ属性部分集合を持つオブジェクトが存在しないかを確認する.
         // 重複するオブジェクトは統合する.
         HashSet<Tupple> attributeDeduplicatedTupples = new HashSet<>();
         for(Tupple povTupple : data){
@@ -70,13 +80,54 @@ public class FormalConceptSparseAnalyzer{
             }
         }
 
+        /*
+        System.out.println("Object dedup.");
+        for(Tupple povTupple : attributeDeduplicatedTupples){
+            System.out.print("{");
+            System.out.print(povTupple.getObjectSubset().toString());
+            System.out.print("},{");
+            System.out.print(povTupple.getAttributeSubset().toString());
+            System.out.println("}");
+        }
+        */        
+
         // 同様に, オブジェクトの重複を統合していく.
-        HashSet<Tupple> deduplicatedTupples = new HashSet<>();
+        HashSet<Tupple> objectDeduplicatedTupples = new HashSet<>();
         for(Tupple povTupple : attributeDeduplicatedTupples){
             boolean dup = false;
-            for(Tupple compTupple : deduplicatedTupples){
+            for(Tupple compTupple : objectDeduplicatedTupples){
                 if(povTupple.getObjectSubset().equals(compTupple.getObjectSubset())){
                     compTupple.addElementsToAttribute(povTupple.getAttributeSubset());
+                    dup = true;
+                    break;
+                }
+            }
+            if(!dup){
+                objectDeduplicatedTupples.add(povTupple.deepCopy());
+            }
+        }
+        attributeDeduplicatedTupples = null; // メモリ開放.
+
+        /*
+        System.out.println("Attribute dedup.");
+        for(Tupple povTupple : objectDeduplicatedTupples){
+            System.out.print("{");
+            System.out.print(povTupple.getObjectSubset().toString());
+            System.out.print("},{");
+            System.out.print(povTupple.getAttributeSubset().toString());
+            System.out.println("}");
+        }
+        */
+        
+        // 一応, もう一度属性部分集合の重複を統合しておく.
+        // 入力されたデータがオブジェクト方向と属性方向のどちらかでスライスされているかが
+        // 保証出来ないので, 念のため.
+        HashSet<Tupple> deduplicatedTupples = new HashSet<>();
+        for(Tupple povTupple : objectDeduplicatedTupples){
+            boolean dup = false;
+            for(Tupple compTupple : deduplicatedTupples){
+                if(povTupple.getAttributeSubset().equals(compTupple.getAttributeSubset())){
+                    compTupple.addElementsToObject(povTupple.getObjectSubset());
                     dup = true;
                     break;
                 }
@@ -85,9 +136,18 @@ public class FormalConceptSparseAnalyzer{
                 deduplicatedTupples.add(povTupple.deepCopy());
             }
         }
-        attributeDeduplicatedTupples = null; // メモリ開放.
-        
+        objectDeduplicatedTupples = null; // メモリ解放.
 
+        System.out.println("dual dedup.");
+        for(Tupple povTupple : deduplicatedTupples){
+            System.out.print("{");
+            System.out.print(povTupple.getObjectSubset().toString());
+            System.out.print("},{");
+            System.out.print(povTupple.getAttributeSubset().toString());
+            System.out.println("}");
+        }
+        
+        // ここからが実際の解析だよー.
         for(Tupple povTupple : deduplicatedTupples){
 
             // 一時的に結果を格納するヤツ.
