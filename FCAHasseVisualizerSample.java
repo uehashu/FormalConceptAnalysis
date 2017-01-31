@@ -24,22 +24,22 @@ public class FCAHasseVisualizerSample{
         HashSet<Integer> universeOfObject = new HashSet<>(); // オブジェクトの全集合
         HashSet<Integer> universeOfAttribute = new HashSet<>(); // 属性の全集合
 
-        // オブジェクトの全集合を準備.
-        for(int i=1;i<=5;i++){
-            universeOfObject.add(i);
-        }
-
-        // 属性の全集合を準備.
-        for(int i=1;i<=4;i++){
-            universeOfAttribute.add(i);
-        }
-
         boolean[][] contextTable =
             {{f,t,t,t},
              {t,f,t,t},
              {t,f,t,f},
              {t,f,t,f},
              {t,f,f,f}};
+
+        // オブジェクトの全集合を準備.
+        for(int i=1;i<=contextTable.length;i++){
+            universeOfObject.add(i);
+        }
+
+        // 属性の全集合を準備.
+        for(int i=1;i<=contextTable[0].length;i++){
+            universeOfAttribute.add(i);
+        }
 
         // 対象を格納するリスト.
         ArrayList<Tupple> testData = new ArrayList<>();
